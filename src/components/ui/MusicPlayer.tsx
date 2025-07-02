@@ -2,42 +2,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-// 为 jsmediatags 定义类型
-interface TagType {
-  tags: {
-    title?: string;
-    artist?: string;
-    picture?: {
-      data: number[];
-      format: string;
-    };
-  };
-}
-
-interface JsMediaTags {
-  read(url: string, options: {
-    onSuccess: (tag: TagType) => void;
-    onError: (error: Error) => void;
-  }): void;
-}
-
-
-// 为 window 对象扩展 jsmediatags 类型定义，避免 TypeScript 报错
-declare global {
-  interface Window {
-    jsmediatags: JsMediaTags;
-  }
-}
-
 // --- SVG 图标 ---
 const VolumeHighIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
 );
 const VolumeMediumIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
 );
 const VolumeMuteIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
 );
 
 
@@ -73,8 +46,8 @@ const KeyframesStyle = () => (
       .volume-slider {
         -webkit-appearance: none;
         appearance: none;
-        width: 80px;
-        height: 5px;
+        width: 60px;
+        height: 4px;
         background: rgba(255,255,255,0.2);
         border-radius: 5px;
         outline: none;
@@ -84,15 +57,15 @@ const KeyframesStyle = () => (
       .volume-slider::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
-        width: 14px;
-        height: 14px;
+        width: 12px;
+        height: 12px;
         background: white;
         border-radius: 50%;
         cursor: pointer;
       }
       .volume-slider::-moz-range-thumb {
-        width: 14px;
-        height: 14px;
+        width: 12px;
+        height: 12px;
         background: white;
         border-radius: 50%;
         cursor: pointer;
@@ -105,23 +78,18 @@ const KeyframesStyle = () => (
 interface MusicArtworkProps {
   songUrl: string;
   isSong: boolean;
-  isScriptReady: boolean;
-  coverImageUrl?: string; // 新增：可选的封面图片URL
+  songTitle: string; // 新增：歌曲标题
+  coverImageUrl?: string; // 可选的封面图片URL
 }
 
 function MusicArtwork({
   songUrl,
   isSong,
-  isScriptReady,
+  songTitle,
   coverImageUrl,
 }: MusicArtworkProps) {
   // --- 状态钩子 ---
-  const [metadata, setMetadata] = useState({
-    music: '加载中...',
-    artist: '...',
-    albumArt: coverImageUrl || '' // 优先使用外部链接
-  });
-  const [isMetadataLoading, setIsMetadataLoading] = useState(true);
+  const [albumArt, setAlbumArt] = useState(coverImageUrl || 'https://placehold.co/256x256/171717/ffffff?text=No+Art');
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -153,50 +121,7 @@ function MusicArtwork({
     }
   };
 
-  // Effect 1: 读取音频元数据
-  useEffect(() => {
-    if (!isScriptReady || !songUrl) return;
-
-    // 如果没有提供外部封面链接，则显示加载状态
-    if (!coverImageUrl) {
-        setIsMetadataLoading(true);
-    } else {
-        setIsMetadataLoading(false);
-    }
-    setImageLoaded(false);
-
-    window.jsmediatags.read(songUrl, {
-      onSuccess: (tag: TagType) => {
-        const { title, artist, picture } = tag.tags;
-        
-        let finalAlbumArt = coverImageUrl;
-
-        if (!finalAlbumArt && picture) {
-          const base64String = btoa(String.fromCharCode.apply(null, picture.data));
-          finalAlbumArt = `data:${picture.format};base64,${base64String}`;
-        }
-        
-        setMetadata({
-          music: title || '未知歌曲',
-          artist: artist || '未知艺术家',
-          albumArt: finalAlbumArt || 'https://placehold.co/256x256/171717/ffffff?text=No+Art'
-        });
-        setIsMetadataLoading(false);
-      },
-      onError: (error: Error) => {
-        console.error('读取元数据失败 (可能是封面太大或CORS问题):', error);
-        setMetadata(prev => ({
-            ...prev,
-            music: '',
-            artist: '',
-            albumArt: prev.albumArt || 'https://placehold.co/256x256/171717/ffffff?text=Error'
-        }));
-        setIsMetadataLoading(false);
-      }
-    });
-  }, [songUrl, isScriptReady, coverImageUrl]);
-
-  // Effect 2: 控制音频播放
+  // Effect 1: 控制音频播放
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -207,7 +132,7 @@ function MusicArtwork({
     }
   }, [isPlaying]);
 
-  // Effect 3: 同步UI和音频原生事件
+  // Effect 2: 同步UI和音频原生事件
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -221,7 +146,7 @@ function MusicArtwork({
     };
   }, []);
 
-  // Effect 4: 鼠标悬停Tooltip
+  // Effect 3: 鼠标悬停Tooltip
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       requestAnimationFrame(() => setMousePosition({ x: e.clientX, y: e.clientY }));
@@ -234,7 +159,7 @@ function MusicArtwork({
     };
   }, [isHovered]);
 
-  // Effect 5: 音量控制
+  // Effect 4: 音量控制
   useEffect(() => {
     const audio = audioRef.current;
     if (audio) {
@@ -242,7 +167,7 @@ function MusicArtwork({
     }
   }, [volume, isMuted]);
 
-  // Effect 6: 点击外部关闭音量条
+  // Effect 5: 点击外部关闭音量条
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (volumeControlRef.current && !volumeControlRef.current.contains(event.target as Node)) {
@@ -257,14 +182,12 @@ function MusicArtwork({
     };
   }, [showVolumeControl]);
 
+  // Effect 6: 更新封面
+  useEffect(() => {
+    setAlbumArt(coverImageUrl || 'https://placehold.co/256x256/171717/ffffff?text=No+Art');
+    setImageLoaded(false); // 每次URL变化时重置加载状态
+  }, [coverImageUrl]);
 
-  if (isMetadataLoading) {
-    return (
-      <div className="relative group w-48 h-48 sm:w-64 sm:h-64">
-        <div className="w-full h-full bg-neutral-800 rounded-lg animate-pulse" />
-      </div>
-    );
-  }
 
   const VolumeIcon = () => {
     if (isMuted || volume === 0) return <VolumeMuteIcon />;
@@ -279,23 +202,23 @@ function MusicArtwork({
       {isHovered && (
         <div
           className="fixed z-50 pointer-events-none hidden sm:block"
-          style={{ left: mousePosition.x - 200, top: mousePosition.y - 60 }}
+          style={{ left: mousePosition.x - 150, top: mousePosition.y - 50 }}
         >
-          <div className="bg-neutral-900/90 backdrop-blur-md text-white px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap shadow-lg border border-neutral-700/50 animate-in">
-            <span className="font-bold">{metadata.artist}</span> &nbsp;•&nbsp; {metadata.music}
+          <div className="bg-neutral-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap shadow-lg border border-neutral-700/50 animate-in">
+            {songTitle}
           </div>
         </div>
       )}
 
       <div className="relative group/player">
         <div
-          className={`absolute -left-16 sm:-left-24 top-1/2 -translate-y-1/2 transition-all duration-500 ease-out ${
+          className={`absolute -left-8 sm:-left-12 top-1/2 -translate-y-1/2 transition-all duration-500 ease-out ${
             isHovered || isPlaying
               ? 'opacity-100 translate-x-0'
-              : 'opacity-0 -translate-x-12 sm:-translate-x-24'
+              : 'opacity-0 -translate-x-10 sm:-translate-x-16'
           }`}
         >
-          <div className="relative w-[190px] h-[190px] sm:w-[260px] sm:h-[260px]">
+          <div className="relative w-[95px] h-[95px] sm:w-[130px] sm:h-[130px]">
            <div
              ref={vinylRef}
              className="w-full h-full"
@@ -315,21 +238,20 @@ function MusicArtwork({
         </div>
 
         <div
-          className="relative overflow-hidden rounded-lg shadow-2xl transition-all duration-300 ease-out hover:scale-105 hover:shadow-3xl cursor-pointer w-48 h-48 sm:w-64 sm:h-64"
+          className="relative overflow-hidden rounded-lg shadow-2xl transition-all duration-300 ease-out hover:scale-105 hover:shadow-3xl cursor-pointer w-24 h-24 sm:w-32 sm:h-32"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
           <img
-            src={metadata.albumArt}
-            alt={`${metadata.music} 封面`}
+            src={albumArt}
+            alt={`${songTitle} 封面`}
             className={`w-full h-full object-cover transition-all duration-300 ease-out group-hover/player:scale-110 ${
               !imageLoaded ? 'opacity-0' : 'opacity-100'
             }`}
             onLoad={() => setImageLoaded(true)}
             onError={() => {
-                // 如果图片加载失败，设置一个备用图片
-                if (metadata.albumArt) { // 避免无限循环
-                    setMetadata(prev => ({...prev, albumArt: 'https://placehold.co/256x256/171717/ffffff?text=Cover+Error'}));
+                if (albumArt !== 'https://placehold.co/256x256/171717/ffffff?text=Cover+Error') {
+                    setAlbumArt('https://placehold.co/256x256/171717/ffffff?text=Cover+Error');
                 }
                 setImageLoaded(true);
             }}
@@ -340,30 +262,30 @@ function MusicArtwork({
             <div className="absolute inset-0 bg-neutral-800 animate-pulse" />
           )}
           
-          <div className={`absolute bottom-2 left-2 right-2 transition-opacity duration-300 ${
+          <div className={`absolute bottom-1.5 left-1.5 right-1.5 transition-opacity duration-300 ${
             isHovered ? 'opacity-100' : 'opacity-0'
           }`} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <button className="w-8 h-8 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg text-white hover:bg-black/50" onClick={handlePlayPause}>
+              <div className="flex items-center gap-1.5">
+                <button className="w-7 h-7 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg text-white hover:bg-black/50" onClick={handlePlayPause}>
                   {isPlaying ? (
-                    <div className="flex gap-0.5"><div className="w-0.5 h-3 bg-white rounded"></div><div className="w-0.5 h-3 bg-white rounded"></div></div>
+                    <div className="flex gap-px"><div className="w-px h-2.5 bg-white rounded-sm"></div><div className="w-px h-2.5 bg-white rounded-sm"></div></div>
                   ) : (
-                    <div className="w-0 h-0 border-l-[6px] border-l-white border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent ml-0.5"></div>
+                    <div className="w-0 h-0 border-l-[5px] border-l-white border-t-[3px] border-t-transparent border-b-[3px] border-b-transparent ml-0.5"></div>
                   )}
                 </button>
                 <div className="sm:hidden">
-                  <div className="text-white text-[10px] font-medium whitespace-nowrap bg-black/40 backdrop-blur-sm px-2 py-1 rounded">
-                    <span className="font-bold">{metadata.artist}</span> • {metadata.music}
+                  <div className="text-white text-[9px] font-medium whitespace-nowrap bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded">
+                    {songTitle}
                   </div>
                 </div>
               </div>
 
               <div ref={volumeControlRef} className="relative flex items-center">
-                <button className="w-8 h-8 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg text-white hover:bg-black/50" onClick={() => setShowVolumeControl(prev => !prev)}>
+                <button className="w-7 h-7 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg text-white hover:bg-black/50" onClick={() => setShowVolumeControl(prev => !prev)}>
                   <VolumeIcon />
                 </button>
-                <div className={`absolute right-0 bottom-full mb-2 p-2 ${showVolumeControl ? 'block' : 'hidden'}`}>
+                <div className={`absolute right-0 bottom-full mb-1 p-1.5 ${showVolumeControl ? 'block' : 'hidden'}`}>
                     <div className="bg-black/40 backdrop-blur-sm p-2 rounded-lg">
                         <input
                             type="range"
@@ -393,48 +315,25 @@ function MusicArtwork({
  * 它将被固定在屏幕的右下角。
  */
 const MusicPlayer = () => {
-  const [isScriptReady, setIsScriptReady] = useState(false);
-
   // 您的七牛云链接（在配置好CORS后使用）
   const yourSongUrl = "https://zh.apex-elite-service.com/wenjian/%E9%BB%84%E8%AF%97%E6%89%B6%20-%20%E4%B9%9D%E4%B8%87%E5%AD%97.mp3";
   
-  useEffect(() => {
-    const scriptId = 'jsmediatags-script';
-    if (document.getElementById(scriptId)) {
-        setIsScriptReady(true);
-        return;
-    }
+  // ===================================================================
+  // == 请在这里修改您想显示的歌曲名称 ==
+  const songTitle = "九万字";
+  // ===================================================================
 
-    const script = document.createElement('script');
-    script.id = scriptId;
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js";
-    script.async = true;
-    script.onload = () => setIsScriptReady(true);
-    script.onerror = () => {
-        console.error("jsmediatags 脚本加载失败。");
-        setIsScriptReady(false);
-    };
-
-    document.body.appendChild(script);
-
-    return () => {
-      const existingScript = document.getElementById(scriptId);
-      if (existingScript) {
-        document.body.removeChild(existingScript);
-      }
-    };
-  }, []);
+  // 封面图片URL
+  const coverImageUrl = "https://zh.apex-elite-service.com/wenjian/logo.png";
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-4 right-4 z-50">
       <KeyframesStyle />
       <MusicArtwork
         songUrl={yourSongUrl} 
         isSong={true}
-        isScriptReady={isScriptReady}
-        // 使用方法：如果MP3内嵌封面失败，可以在这里提供一个图片的URL
-        // coverImageUrl="https://.../your-cover-image.jpg"
-        coverImageUrl="https://zh.apex-elite-service.com/wenjian/logo.png"
+        songTitle={songTitle}
+        coverImageUrl={coverImageUrl}
       />
     </div>
   );
