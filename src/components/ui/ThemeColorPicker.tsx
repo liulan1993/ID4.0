@@ -20,9 +20,9 @@ import {
   type RgbaColor,
   rgbaToHsva,
 } from '@uiw/color-convert';
-// @ts-ignore
+
 import Hue from '@uiw/react-color-hue';
-// @ts-ignore
+
 import Saturation from '@uiw/react-color-saturation';
 import { twMerge } from 'tailwind-merge';
 import { clsx, type ClassValue } from 'clsx';
@@ -96,7 +96,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 // --- Input 组件 ---
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+export type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(({ className, type, ...props }, ref) => {
   return (
@@ -273,7 +273,7 @@ export function ThemeColorPicker({
         <div className="space-y-2 p-4">
           <Saturation
             hsva={colorHsv}
-            onChange={(newColor: any) => {
+            onChange={(newColor: Partial<HsvaColor>) => {
               handleValueChange({ ...colorHsv, ...newColor });
             }}
             style={{
@@ -286,7 +286,7 @@ export function ThemeColorPicker({
           />
           <Hue
             hue={colorHsv.h}
-            onChange={(newHue: any) => {
+            onChange={(newHue: { h: number }) => {
               handleValueChange({ ...colorHsv, ...newHue });
             }}
             className="[&>div:first-child]:overflow-hidden [&>div:first-child]:!rounded"
@@ -482,7 +482,7 @@ type ObjectColorInputProps =
 function ObjectColorInput({ value, label, onValueChange }: ObjectColorInputProps) {
   function handleChange(val: Partial<HslaColor> | Partial<RgbaColor>) {
     if (onValueChange) {
-        onValueChange({ ...value, ...val } as any);
+        (onValueChange as (color: HslaColor | RgbaColor) => void)({ ...value, ...val });
     }
   }
   return (

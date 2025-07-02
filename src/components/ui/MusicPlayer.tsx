@@ -2,10 +2,30 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
+// 为 jsmediatags 定义类型
+interface TagType {
+  tags: {
+    title?: string;
+    artist?: string;
+    picture?: {
+      data: number[];
+      format: string;
+    };
+  };
+}
+
+interface JsMediaTags {
+  read(url: string, options: {
+    onSuccess: (tag: TagType) => void;
+    onError: (error: Error) => void;
+  }): void;
+}
+
+
 // 为 window 对象扩展 jsmediatags 类型定义，避免 TypeScript 报错
 declare global {
   interface Window {
-    jsmediatags: any;
+    jsmediatags: JsMediaTags;
   }
 }
 
@@ -63,7 +83,8 @@ function MusicArtwork({
   const [isHovered, setIsHovered] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [rotation, setRotation] = useState(0);
+  // 使用下划线前缀表示 _setRotation 是有意未使用的
+  const [rotation, _setRotation] = useState(0);
 
   // --- Ref 钩子 ---
   const vinylRef = useRef<HTMLDivElement>(null);
@@ -90,7 +111,7 @@ function MusicArtwork({
     setImageLoaded(false);
 
     window.jsmediatags.read(songUrl, {
-      onSuccess: (tag: any) => {
+      onSuccess: (tag: TagType) => {
         const { title, artist, picture } = tag.tags;
         let albumArtUrl = 'https://placehold.co/256x256/171717/ffffff?text=No+Art';
 
@@ -106,7 +127,7 @@ function MusicArtwork({
         });
         setIsMetadataLoading(false);
       },
-      onError: (error: any) => {
+      onError: (error: Error) => {
         console.error('读取元数据失败:', error);
         setMetadata({
           music: '读取失败',

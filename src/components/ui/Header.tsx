@@ -5,8 +5,14 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 
 // --- 临时的占位组件，请参考此逻辑修改您项目中的实际组件 ---
 
+// 为 NavLink 定义 Props 类型
+interface NavLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+    children: React.ReactNode;
+    hasDropdown?: boolean;
+}
+
 // NavLink 组件现在会接收 hasDropdown 属性，但不会将其传递给 <a> 标签
-const NavLink = ({ children, hasDropdown, ...props }: any) => (
+const NavLink = ({ children, hasDropdown, ...props }: NavLinkProps) => (
     <a {...props} className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center">
         {children}
         {hasDropdown && (
@@ -17,8 +23,16 @@ const NavLink = ({ children, hasDropdown, ...props }: any) => (
     </a>
 );
 
-const DropdownMenu = ({ children, isOpen }: any) => isOpen ? <div className="absolute top-full left-0 mt-2 bg-[#1a1a1a] rounded-md shadow-lg p-2">{children}</div> : null;
-const DropdownItem = ({ children, ...props }: any) => <a {...props} className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md">{children}</a>;
+// 为 DropdownMenu 定义 Props 类型
+const DropdownMenu = ({ children, isOpen }: { children: React.ReactNode; isOpen: boolean }) => isOpen ? <div className="absolute top-full left-0 mt-2 bg-[#1a1a1a] rounded-md shadow-lg p-2">{children}</div> : null;
+
+// 为 DropdownItem 定义 Props 类型
+interface DropdownItemProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+    children: React.ReactNode;
+    icon?: React.ReactNode;
+}
+const DropdownItem = ({ children, icon, ...props }: DropdownItemProps) => <a {...props} className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md flex items-center">{children}{icon}</a>;
+
 const MenuIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>;
 const CloseIcon = () => <svg className="w-6 h-6" fill="none"stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
 const ExternalLinkIcon = () => <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>;
@@ -102,12 +116,12 @@ const Header: React.FC<{ isScrolled: boolean }> = ({ isScrolled }) => {
 
                 <div className="flex items-center flex-shrink-0 space-x-4 lg:space-x-6">
                     <NavLink href="#" className="hidden md:inline-block">Sign in</NavLink>
-                    <motion.a 
-                        href="#" 
-                        className="text-[#111111] px-4 py-[6px] rounded-md text-base sm:text-lg lg:text-xl font-semibold hover:bg-opacity-90 transition-colors duration-200 whitespace-nowrap shadow-sm hover:shadow-md" 
+                    <motion.a
+                        href="#"
+                        className="text-[#111111] px-4 py-[6px] rounded-md text-base sm:text-lg lg:text-xl font-semibold hover:bg-opacity-90 transition-colors duration-200 whitespace-nowrap shadow-sm hover:shadow-md"
                         style={{ backgroundColor: 'var(--theme-color, #0CF2A0)' }}
-                        whileHover={{ scale: 1.03, y: -1 }} 
-                        whileTap={{ scale: 0.97 }} 
+                        whileHover={{ scale: 1.03, y: -1 }}
+                        whileTap={{ scale: 0.97 }}
                         transition={{ type: "spring", stiffness: 400, damping: 15 }}
                     >
                         Book a demo
