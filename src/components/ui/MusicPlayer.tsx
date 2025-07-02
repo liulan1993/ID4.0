@@ -129,11 +129,13 @@ function MusicArtwork({
   const [rotation] = useState(0);
   const [volume, setVolume] = useState(0.75);
   const [isMuted, setIsMuted] = useState(false);
+  const [showVolumeControl, setShowVolumeControl] = useState(false);
 
 
   // --- Ref 钩子 ---
   const vinylRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const volumeControlRef = useRef<HTMLDivElement>(null);
 
   const spinDuration = isSong ? (1 / 0.75) : (1 / 0.55);
 
@@ -146,11 +148,9 @@ function MusicArtwork({
     setVolume(newVolume);
     if (newVolume > 0) {
       setIsMuted(false);
+    } else {
+      setIsMuted(true);
     }
-  };
-
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
   };
 
   // Effect 1: 读取音频元数据
@@ -187,8 +187,8 @@ function MusicArtwork({
         console.error('读取元数据失败 (可能是封面太大或CORS问题):', error);
         setMetadata(prev => ({
             ...prev,
-            music: '读取失败',
-            artist: '错误',
+            music: '',
+            artist: '',
             albumArt: prev.albumArt || 'https://placehold.co/256x256/171717/ffffff?text=Error'
         }));
         setIsMetadataLoading(false);
@@ -241,6 +241,21 @@ function MusicArtwork({
       audio.volume = isMuted ? 0 : volume;
     }
   }, [volume, isMuted]);
+
+  // Effect 6: 点击外部关闭音量条
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (volumeControlRef.current && !volumeControlRef.current.contains(event.target as Node)) {
+        setShowVolumeControl(false);
+      }
+    }
+    if (showVolumeControl) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showVolumeControl]);
 
 
   if (isMetadataLoading) {
@@ -344,11 +359,11 @@ function MusicArtwork({
                 </div>
               </div>
 
-              <div className="relative group/volume flex items-center">
-                <button className="w-8 h-8 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg text-white hover:bg-black/50" onClick={toggleMute}>
+              <div ref={volumeControlRef} className="relative flex items-center">
+                <button className="w-8 h-8 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg text-white hover:bg-black/50" onClick={() => setShowVolumeControl(prev => !prev)}>
                   <VolumeIcon />
                 </button>
-                <div className="absolute right-0 bottom-full mb-2 p-2 hidden group-hover/volume:block">
+                <div className={`absolute right-0 bottom-full mb-2 p-2 ${showVolumeControl ? 'block' : 'hidden'}`}>
                     <div className="bg-black/40 backdrop-blur-sm p-2 rounded-lg">
                         <input
                             type="range"
