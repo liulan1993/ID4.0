@@ -8,14 +8,9 @@ import InteractiveHero from '@/components/ui/InteractiveHero';
 import PlaceholderSection from '@/components/ui/PlaceholderSection';
 import { ThemeColorPicker, type ColorPickerValue } from '@/components/ui/ThemeColorPicker';
 import { Paintbrush } from 'lucide-react';
-import MusicPlayer from '@/components/ui/MusicPlayer'; // 1. 导入音乐播放器组件
+import MusicPlayer from '@/components/ui/MusicPlayer';
+import LandingPage from '@/components/ui/LandingPage'; // 导入更新后的 LandingPage
 
-/**
- * Page 组件：
- * 这是应用的最终入口页面。
- * 它负责组合所有顶级组件，并管理整个页面的状态，
- * 例如页面高度和全局主题颜色。
- */
 const Page = () => {
     const pageRef = useRef<HTMLDivElement>(null);
     const [pageHeight, setPageHeight] = useState(0);
@@ -65,7 +60,7 @@ const Page = () => {
                 </ThemeColorPicker>
             </div>
             
-            <div className="relative z-10">
+            <main className="relative z-10">
                 <InteractiveHero />
                 <PlaceholderSection title="功能介绍" />
                 <PlaceholderSection title="客户案例" />
@@ -89,9 +84,13 @@ const Page = () => {
                 <PlaceholderSection title="客户案例" />
                 <PlaceholderSection title="定价方案" />
                 <PlaceholderSection title="关于我们" />
-            </div>
+            </main>
 
-            {/* 2. 在此处使用音乐播放器组件 */}
+            {/* 将 LandingPage 作为页脚，它包含了所有动画 */}
+            <footer className="relative z-10">
+                <LandingPage />
+            </footer>
+            
             <MusicPlayer />
         </div>
     );
