@@ -83,8 +83,7 @@ function MusicArtwork({
   const [isHovered, setIsHovered] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  // 使用下划线前缀表示 _setRotation 是有意未使用的
-  const [rotation, _setRotation] = useState(0);
+  const [rotation] = useState(0);
 
   // --- Ref 钩子 ---
   const vinylRef = useRef<HTMLDivElement>(null);
