@@ -273,7 +273,7 @@ export default function ScrollAnimationHero() {
     const finalTextOpacity = useTransform(scrollYProgress, [0.65, 0.68], [0, 1]);
 
     return (
-        <main ref={mainRef} id="scroll-animation-hero-container" className="relative h-[500vh]">
+        <main ref={mainRef} id="scroll-animation-hero-container" className="relative h-[600vh]">
             <div className="sticky top-0 h-screen w-full overflow-hidden">
                 <motion.div style={{ opacity: landingOpacity }} className="absolute inset-0">
                     <LandingPage />
