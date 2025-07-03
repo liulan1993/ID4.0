@@ -26,7 +26,7 @@ const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
 };
 
 // --- 帮助函数：防抖 ---
-const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) => {
+const debounce = <F extends (...args: unknown[]) => unknown>(func: F, waitFor: number) => {
     let timeout: ReturnType<typeof setTimeout> | null = null;
 
     return (...args: Parameters<F>): void => {
