@@ -1,127 +1,80 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import React, { useMemo, useEffect, useState } from 'react';
 
-/**
- * Splash 组件: 雨滴迸射的水花效果。
- * 这个组件没有改动，和最初的版本一样。
- * @param {{ onComplete: () => void; color: string }} props - 包含完成回调和粒子颜色的对象。
- */
-const Splash: React.FC<{ onComplete: () => void; color: string }> = ({ onComplete, color }) => {
-    const particleCount = useMemo(() => Math.floor(Math.random() * 5) + 5, []);
-
-    const particleVariants = {
-        initial: { x: 0, y: 0, opacity: 1 },
-        animate: (i: number) => {
-            const angle = (i / particleCount) * Math.PI * 2;
-            const radius = Math.random() * 20 + 15;
-            return {
-                x: Math.cos(angle) * radius,
-                y: Math.sin(angle) * radius,
-                opacity: 0,
-            };
-        },
-    };
-
-    return (
-        <motion.div
-            className="absolute"
-            initial="initial"
-            animate="animate"
-            onAnimationComplete={onComplete}
-            transition={{ ease: "easeOut", duration: 0.6, staggerChildren: 0.03 }}
-        >
-            {Array.from({ length: particleCount }).map((_, i) => (
-                <motion.div
-                    key={i}
-                    custom={i}
-                    variants={particleVariants}
-                    className="absolute w-1 h-1 rounded-full"
-                    style={{ backgroundColor: color }}
-                />
-            ))}
-        </motion.div>
-    );
-};
-
-/**
- * Raindrop 组件: 单个雨滴的动画，现在包含水花和循环。
- * @param {object} props - 包含雨滴所有属性的对象。
- */
-const Raindrop: React.FC<{
+// --- 类型定义 ---
+interface RaindropProps {
+  id: number;
   left: string;
   duration: number;
   delay: number;
-  pageHeight: number;
   color: string;
-}> = ({ left, duration, delay, pageHeight, color }) => {
-    const [isSplashing, setIsSplashing] = useState(false);
-    // --- 核心修改：使用 key 来强制重新渲染 ---
-    // 通过在循环结束后改变 key，我们可以让 React 卸载旧的雨滴并挂载一个新的雨滴实例，
-    // 从而以全新的状态（包括动画）重新开始。
-    const [key, setKey] = useState(Math.random());
+}
 
-    // 当水花动画完成时，这个函数会被调用
-    const handleSplashComplete = () => {
-        setIsSplashing(false); // 重置水花状态
-        setKey(Math.random()); // 改变 key，触发雨滴的“重生”
-    };
+interface RainEffectProps {
+  color: string;
+}
 
-    const gradient = `linear-gradient(to bottom, transparent, ${color}90)`;
+/**
+ * Raindrop 组件: 单个雨滴的动画。
+ * 已被重构为使用纯 CSS 动画，以获得最佳性能。
+ */
+const Raindrop: React.FC<RaindropProps> = React.memo(({ left, duration, delay, color }) => {
+  const gradient = `linear-gradient(to bottom, transparent, ${color}90)`;
 
-    // 使用 key 属性包裹整个组件，这是实现循环的关键
-    return (
-        <div key={key} className="absolute top-0" style={{ left }}>
-            {!isSplashing && (
-                <motion.div
-                    className="h-10 w-0.5"
-                    style={{ backgroundImage: gradient }}
-                    initial={{ y: -200 }}
-                    animate={{ y: pageHeight }}
-                    transition={{
-                        duration,
-                        delay,
-                        ease: "linear",
-                    }}
-                    // 当下落动画完成时，触发水花效果
-                    onAnimationComplete={() => setIsSplashing(true)}
-                />
-            )}
-            {/* 当 isSplashing 为 true 时，在页面底部渲染水花效果 */}
-            {isSplashing && (
-                <div className="absolute" style={{top: `${pageHeight}px`}}>
-                    <Splash onComplete={handleSplashComplete} color={color} />
-                </div>
-            )}
-        </div>
-    );
-};
+  return (
+    <div
+      className="raindrop"
+      style={{
+        left,
+        backgroundImage: gradient,
+        animationDuration: `${duration}s`,
+        animationDelay: `${delay}s`,
+      }}
+    />
+  );
+});
+
+Raindrop.displayName = 'Raindrop';
 
 /**
  * RainEffect 组件: 渲染整个下雨效果。
- * @param {{ pageHeight: number; color: string }} props - 包含页面高度和雨滴颜色的对象。
+ * 使用 CSS 动画进行了性能优化，并修复了动画参数。
  */
-const RainEffect: React.FC<{ pageHeight: number; color: string }> = ({ pageHeight, color }) => {
-  
-  const raindrops = useMemo(() => {
-    // --- 自定义说明 ---
-    // 这里的逻辑和之前一样，你可以通过调整这些值来改变雨的效果。
+const RainEffect: React.FC<RainEffectProps> = ({ color }) => {
+  const [pageHeight, setPageHeight] = useState(0);
 
-    // 1. 雨滴密度 (Density)
-    // 页面每增高 `densityFactor` 像素，增加一个雨滴。减小此值可增加密度。
-    const densityFactor = 100;
-    const count = pageHeight > 0 ? Math.floor(pageHeight / densityFactor) : 50;
+  // 仅在客户端挂载后获取一次页面高度
+  useEffect(() => {
+    // 使用 document.documentElement.scrollHeight 来获取整个页面的高度
+    setPageHeight(document.documentElement.scrollHeight);
+  }, []);
+
+  const raindrops = useMemo(() => {
+    if (pageHeight <= 0) return [];
+
+    // --- 优化：响应式雨滴密度 ---
+    const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
+    let count;
+
+    if (screenWidth < 768) { // 手机
+      count = 30;
+    } else if (screenWidth < 1024) { // 平板
+      count = 50;
+    } else { // PC
+      count = 80;
+    }
+    
+    // 设置一个最大值，防止在超长页面上创建过多元素
+    const maxCount = 100; 
+    count = Math.min(count, maxCount);
 
     return Array.from({ length: count }).map((_, i) => ({
-        id: i, // 为每个雨滴配置一个稳定的初始 key
-        left: `${Math.random() * 100}%`,
-        // 2. 雨滴速度 (Speed)
-        // `duration` 越小，速度越快。
-        duration: Math.random() * 1 + 50,
-        // 3. 初始延迟 (Initial Delay)
-        // `delay` 让雨滴错落有致地出现。
-        delay: Math.random() * 50,
+      id: i,
+      left: `${Math.random() * 100}%`,
+      // --- 修复：修正了动画时长和延迟，使其在合理范围内 ---
+      duration: Math.random() * 1.5 + 50, // 持续时间：1s 到 2.5s
+      delay: Math.random() * 50, // 延迟：0s 到 10s
     }));
   }, [pageHeight]);
 
@@ -130,18 +83,52 @@ const RainEffect: React.FC<{ pageHeight: number; color: string }> = ({ pageHeigh
   }
 
   return (
-    <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-[100]">
-      {raindrops.map((drop) => (
-        <Raindrop
-          key={drop.id} // 使用初始 key
-          left={drop.left}
-          duration={drop.duration}
-          delay={drop.delay}
-          pageHeight={pageHeight}
-          color={color}
-        />
-      ))}
-    </div>
+    <>
+      {/* 将 CSS @keyframes 直接注入到 head 中。
+        这比在每个雨滴上使用 style 属性更高效，因为它只定义了一次动画规则。
+      */}
+      <style>
+        {`
+          @keyframes fall {
+            0% {
+              transform: translateY(-200px) scaleY(1);
+              opacity: 1;
+            }
+            90% {
+              transform: translateY(${pageHeight}px) scaleY(1);
+              opacity: 1;
+            }
+            100% {
+              transform: translateY(${pageHeight}px) scaleY(0);
+              opacity: 0;
+            }
+          }
+
+          .raindrop {
+            position: absolute;
+            top: 0;
+            width: 1.5px;
+            height: 80px;
+            pointer-events: none;
+            animation-name: fall;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+          }
+        `}
+      </style>
+      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-[100]">
+        {raindrops.map((drop) => (
+          <Raindrop
+            key={drop.id}
+            id={drop.id}
+            left={drop.left}
+            duration={drop.duration}
+            delay={drop.delay}
+            color={color}
+          />
+        ))}
+      </div>
+    </>
   );
 };
 
