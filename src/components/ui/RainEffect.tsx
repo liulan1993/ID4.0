@@ -74,7 +74,7 @@ const RainEffect: React.FC<RainEffectProps> = ({ color }) => {
       left: `${Math.random() * 100}%`,
       // --- 修复：修正了动画时长和延迟，使其在合理范围内 ---
       duration: Math.random() * 1.5 + 50, // 持续时间：1s 到 2.5s
-      delay: Math.random() * 50, // 延迟：0s 到 10s
+      delay: Math.random() * 10, // 延迟：0s 到 10s
     }));
   }, [pageHeight]);
 
