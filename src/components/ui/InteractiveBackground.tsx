@@ -25,6 +25,19 @@ const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
         : null;
 };
 
+// --- 帮助函数：防抖 ---
+const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) => {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+
+    return (...args: Parameters<F>): void => {
+        if (timeout) {
+            clearTimeout(timeout);
+        }
+        timeout = setTimeout(() => func(...args), waitFor);
+    };
+};
+
+
 /**
  * InteractiveBackground 组件：
  * 渲染并管理 Canvas 上的交互式点状背景动画。
@@ -47,7 +60,7 @@ const InteractiveBackground: React.FC<{ color: string }> = ({ color }) => {
         }
     }, [color]);
 
-    const DOT_SPACING = 25;
+    // --- 常量配置 ---
     const BASE_OPACITY_MIN = 0.40;
     const BASE_OPACITY_MAX = 0.50;
     const BASE_RADIUS = 1;
@@ -55,15 +68,38 @@ const InteractiveBackground: React.FC<{ color: string }> = ({ color }) => {
     const INTERACTION_RADIUS_SQ = INTERACTION_RADIUS * INTERACTION_RADIUS;
     const OPACITY_BOOST = 0.6;
     const RADIUS_BOOST = 2.5;
+    // 优化：网格单元尺寸现在依赖于交互半径
     const GRID_CELL_SIZE = Math.max(50, Math.floor(INTERACTION_RADIUS / 1.5));
 
-    const handleMouseMove = useCallback((event: globalThis.MouseEvent) => {
-        mousePositionRef.current = { x: event.clientX, y: event.clientY };
+    // --- 交互位置更新 ---
+    const updateInteractionPosition = useCallback((clientX: number, clientY: number) => {
+        mousePositionRef.current = { x: clientX, y: clientY };
     }, []);
 
+    const clearInteractionPosition = useCallback(() => {
+        mousePositionRef.current = { x: null, y: null };
+    }, []);
+
+    const handleMouseMove = useCallback((event: globalThis.MouseEvent) => {
+        updateInteractionPosition(event.clientX, event.clientY);
+    }, [updateInteractionPosition]);
+
+    // 优化：添加触摸事件处理
+    const handleTouchMove = useCallback((event: globalThis.TouchEvent) => {
+        if (event.touches.length > 0) {
+            updateInteractionPosition(event.touches[0].clientX, event.touches[0].clientY);
+        }
+    }, [updateInteractionPosition]);
+
+
+    // --- 点和网格的创建 ---
     const createDots = useCallback(() => {
         const { width, height } = canvasSizeRef.current;
         if (width === 0 || height === 0) return;
+
+        // 优化：根据屏幕宽度调整点的间距，提升小屏幕性能
+        const screenWidth = window.innerWidth;
+        const DOT_SPACING = screenWidth < 768 ? 35 : 25; // 手机端增大间距
 
         const newDots: Dot[] = [];
         const newGrid: Record<string, number[]> = {};
@@ -94,22 +130,34 @@ const InteractiveBackground: React.FC<{ color: string }> = ({ color }) => {
         }
         dotsRef.current = newDots;
         gridRef.current = newGrid;
-    }, [DOT_SPACING, GRID_CELL_SIZE, BASE_OPACITY_MIN, BASE_OPACITY_MAX, BASE_RADIUS]);
+    }, [GRID_CELL_SIZE, BASE_OPACITY_MIN, BASE_OPACITY_MAX, BASE_RADIUS]);
 
+    // --- 窗口大小调整处理 ---
     const handleResize = useCallback(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
+
+        // 优化：适配高DPI（Retina）屏幕，使图像更清晰
+        const dpr = window.devicePixelRatio || 1;
         const width = window.innerWidth;
         const height = document.documentElement.scrollHeight;
 
-        if (canvas.width !== width || canvas.height !== height) {
-            canvas.width = width;
-            canvas.height = height;
+        // 仅在尺寸确实发生变化时才进行重绘，避免不必要的计算
+        if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+
+            const ctx = canvas.getContext('2d');
+            ctx?.scale(dpr, dpr);
+            
             canvasSizeRef.current = { width, height };
             createDots();
         }
     }, [createDots]);
 
+    // --- 动画循环 ---
     const animateDots = useCallback(() => {
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
@@ -117,7 +165,7 @@ const InteractiveBackground: React.FC<{ color: string }> = ({ color }) => {
         const grid = gridRef.current;
         const { width, height } = canvasSizeRef.current;
         const { x: mouseX, y: mouseY } = mousePositionRef.current;
-        const { r, g, b } = themeRgbRef.current; // 使用主题颜色的 RGB 值
+        const { r, g, b } = themeRgbRef.current;
 
         if (!ctx || !dots || !grid || width === 0 || height === 0) {
             animationFrameId.current = requestAnimationFrame(animateDots);
@@ -167,33 +215,45 @@ const InteractiveBackground: React.FC<{ color: string }> = ({ color }) => {
             dot.currentRadius = dot.baseRadius + interactionFactor * RADIUS_BOOST;
 
             ctx.beginPath();
-            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity.toFixed(3)})`; // 应用主题颜色
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity.toFixed(3)})`;
             ctx.arc(dot.x, dot.y, dot.currentRadius, 0, Math.PI * 2);
             ctx.fill();
         });
 
         animationFrameId.current = requestAnimationFrame(animateDots);
-    }, [GRID_CELL_SIZE, INTERACTION_RADIUS, INTERACTION_RADIUS_SQ, OPACITY_BOOST, RADIUS_BOOST, BASE_OPACITY_MIN, BASE_OPACITY_MAX, BASE_RADIUS]);
+    }, [GRID_CELL_SIZE, INTERACTION_RADIUS_SQ, OPACITY_BOOST, RADIUS_BOOST, BASE_OPACITY_MIN, BASE_OPACITY_MAX]);
 
+    // --- Effect Hook ---
     useEffect(() => {
+        // 优化：使用防抖处理 resize 事件，防止性能问题
+        const debouncedResize = debounce(handleResize, 250);
+
         const pageElement = document.documentElement;
-        const resizeObserver = new ResizeObserver(() => handleResize());
+        const resizeObserver = new ResizeObserver(debouncedResize);
         resizeObserver.observe(pageElement);
         
         handleResize();
         
-        const handleMouseLeave = () => { mousePositionRef.current = { x: null, y: null }; };
+        // 优化：添加触摸事件监听器
         window.addEventListener('mousemove', handleMouseMove, { passive: true });
-        document.documentElement.addEventListener('mouseleave', handleMouseLeave);
+        window.addEventListener('touchmove', handleTouchMove, { passive: true });
+        document.documentElement.addEventListener('mouseleave', clearInteractionPosition);
+        window.addEventListener('touchend', clearInteractionPosition, { passive: true });
+
         animationFrameId.current = requestAnimationFrame(animateDots);
 
         return () => {
             resizeObserver.disconnect();
             window.removeEventListener('mousemove', handleMouseMove);
-            document.documentElement.removeEventListener('mouseleave', handleMouseLeave);
-            if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+            window.removeEventListener('touchmove', handleTouchMove);
+            document.documentElement.removeEventListener('mouseleave', clearInteractionPosition);
+            window.removeEventListener('touchend', clearInteractionPosition);
+
+            if (animationFrameId.current) {
+                cancelAnimationFrame(animationFrameId.current);
+            }
         };
-    }, [handleResize, handleMouseMove, animateDots]);
+    }, [handleResize, handleMouseMove, handleTouchMove, clearInteractionPosition, animateDots]);
 
     return <canvas ref={canvasRef} className="absolute inset-0 -z-10 pointer-events-none opacity-80" />;
 };
