@@ -242,8 +242,8 @@ const FinalAnimatedText = ({ scrollYProgress }: { scrollYProgress: MotionValue<n
     return (
         <motion.div style={{ opacity, scale }} className="relative z-20 flex h-full w-full items-center justify-center">
             <div className="max-w-xl text-center">
-                <h1 className="text-5xl font-bold tracking-tighter text-slate-800">您的动画英雄区域</h1>
-                <p className="my-6 text-sm text-slate-700 md:text-base">这又是一个英雄区域，这次带有滚动触发动画，用动效来激活英雄区域的内容。</p>
+                <h1 className="text-5xl font-bold tracking-tighter text-slate-800">界面占位</h1>
+                <p className="my-6 text-sm text-slate-700 md:text-base">这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位</p>
             </div>
         </motion.div>
     );

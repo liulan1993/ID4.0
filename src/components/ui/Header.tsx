@@ -90,32 +90,32 @@ const Header: React.FC<{ isScrolled: boolean }> = ({ isScrolled }) => {
                         <path d="M2 17L12 22L22 17" stroke="var(--theme-color, #0CF2A0)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         <path d="M2 12L12 17L22 12" stroke="var(--theme-color, #0CF2A0)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                    <span className="text-3xl font-bold text-white ml-2">Nexus</span>
+                    <span className="text-3xl font-bold text-white ml-2">标题占位</span>
                 </div>
 
                 <div className="hidden md:flex items-center justify-center flex-grow space-x-6 lg:space-x-8 px-4">
-                    <NavLink href="#">Product</NavLink>
-                    <NavLink href="#">Customers</NavLink>
+                    <NavLink href="#">导航占位</NavLink>
+                    <NavLink href="#">导航占位</NavLink>
                     <div className="relative" onMouseEnter={() => setOpenDropdown('channels')} onMouseLeave={() => setOpenDropdown(null)}>
-                        <NavLink href="#" hasDropdown>Channels</NavLink>
+                        <NavLink href="#" hasDropdown>导航占位</NavLink>
                         <DropdownMenu isOpen={openDropdown === 'channels'}>
-                            <DropdownItem href="#">Slack</DropdownItem>
-                            <DropdownItem href="#">Microsoft Teams</DropdownItem>
+                            <DropdownItem href="#">导航占位</DropdownItem>
+                            <DropdownItem href="#">导航占位</DropdownItem>
                         </DropdownMenu>
                     </div>
                     <div className="relative" onMouseEnter={() => setOpenDropdown('resources')} onMouseLeave={() => setOpenDropdown(null)}>
-                        <NavLink href="#" hasDropdown>Resources</NavLink>
+                        <NavLink href="#" hasDropdown>导航占位</NavLink>
                         <DropdownMenu isOpen={openDropdown === 'resources'}>
-                            <DropdownItem href="#" icon={<ExternalLinkIcon/>}>Blog</DropdownItem>
-                            <DropdownItem href="#">Guides</DropdownItem>
+                            <DropdownItem href="#" icon={<ExternalLinkIcon/>}>导航占位</DropdownItem>
+                            <DropdownItem href="#">导航占位</DropdownItem>
                         </DropdownMenu>
                     </div>
-                    <NavLink href="#">Docs</NavLink>
-                    <NavLink href="#">Pricing</NavLink>
+                    <NavLink href="#">导航占位</NavLink>
+                    <NavLink href="#">导航占位</NavLink>
                 </div>
 
                 <div className="flex items-center flex-shrink-0 space-x-4 lg:space-x-6">
-                    <NavLink href="#" className="hidden md:inline-block">Sign in</NavLink>
+                    <NavLink href="#" className="hidden md:inline-block">登录占位</NavLink>
                     <motion.a
                         href="#"
                         className="text-[#111111] px-4 py-[6px] rounded-md text-base sm:text-lg lg:text-xl font-semibold hover:bg-opacity-90 transition-colors duration-200 whitespace-nowrap shadow-sm hover:shadow-md"
@@ -124,7 +124,7 @@ const Header: React.FC<{ isScrolled: boolean }> = ({ isScrolled }) => {
                         whileTap={{ scale: 0.97 }}
                         transition={{ type: "spring", stiffness: 400, damping: 15 }}
                     >
-                        Book a demo
+                        按钮占位
                     </motion.a>
                     <motion.button className="md:hidden text-gray-300 hover:text-white z-50" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} aria-label="Toggle menu" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                         {isMobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
@@ -136,14 +136,14 @@ const Header: React.FC<{ isScrolled: boolean }> = ({ isScrolled }) => {
                 {isMobileMenuOpen && (
                     <motion.div key="mobile-menu" variants={mobileMenuVariants} initial="hidden" animate="visible" exit="exit" className="md:hidden absolute top-full left-0 right-0 bg-[#111111]/95 backdrop-blur-sm shadow-lg py-4 border-t border-gray-800/50">
                         <div className="flex flex-col items-center space-y-4 px-6">
-                            <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>Product</NavLink>
-                            <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>Customers</NavLink>
-                            <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>Channels</NavLink>
-                            <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>Resources</NavLink>
-                            <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>Docs</NavLink>
-                            <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>Pricing</NavLink>
+                            <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>导航占位</NavLink>
+                            <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>导航占位</NavLink>
+                            <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>导航占位</NavLink>
+                            <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>导航占位</NavLink>
+                            <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>导航占位</NavLink>
+                            <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>导航占位</NavLink>
                             <hr className="w-full border-t border-gray-700/50 my-2"/>
-                            <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>Sign in</NavLink>
+                            <NavLink href="#" onClick={() => setIsMobileMenuOpen(false)}>登录占位</NavLink>
                         </div>
                     </motion.div>
                 )}
