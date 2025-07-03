@@ -4,8 +4,6 @@ import React, { useRef, useState, useId, useEffect } from 'react';
 import { motion, useScroll, useTransform, MotionValue } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-// 修复：移除了未使用的 'twMerge' 和 'ClassNameValue'
-// import { twMerge, ClassNameValue } from 'tailwind-merge';
 
 // --- 类型定义 ---
 interface TrailPoint {
@@ -21,6 +19,14 @@ interface Star {
   trail: TrailPoint[];
 }
 
+// 修复：为拼图配置添加了明确的类型定义，以取代 'any'
+interface PuzzleConfig {
+  path: string;
+  x: number;
+  y: number;
+  rotate: number;
+}
+
 // 扩展全局 Window 接口以包含 GSAP
 declare global {
     interface Window {
@@ -28,11 +34,6 @@ declare global {
         ScrollTrigger: typeof ScrollTrigger;
     }
 }
-
-// 修复：移除了未使用的 'cn' 函数
-// function cn(...inputs: ClassNameValue[]) {
-//   return twMerge(inputs);
-// }
 
 // --- 场景一：星空穿梭组件 ---
 const LandingPage = () => {
@@ -57,7 +58,6 @@ const LandingPage = () => {
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
 
-            // 修复：将 'let' 改为 'const'，因为这些变量未被重新赋值
             const focalLength = canvas.width * 2;
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
@@ -130,7 +130,6 @@ const LandingPage = () => {
                 if (animationFrameId) {
                     window.cancelAnimationFrame(animationFrameId);
                 }
-                // 清理 GSAP 实例
                 tl.kill();
                 ScrollTrigger.getAll().forEach(trigger => trigger.kill());
             };
@@ -163,7 +162,6 @@ function getRoundedPolygonPath(points: {x: number, y: number}[], radius: number)
         const len2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
         const angle = Math.acos((v1.x * v2.x + v1.y * v2.y) / (len1 * len2));
         const tan = Math.tan(angle / 2);
-        // 修复：将 'let' 改为 'const'
         const cornerRadius = Math.min(radius, (len1 / 2) * tan, (len2 / 2) * tan);
         const t1 = { x: p1.x + (v1.x / len1) * cornerRadius, y: p1.y + (v1.y / len1) * cornerRadius };
         const t2 = { x: p1.x + (v2.x / len2) * cornerRadius, y: p1.y + (v2.y / len2) * cornerRadius };
@@ -173,7 +171,7 @@ function getRoundedPolygonPath(points: {x: number, y: number}[], radius: number)
     return pathData;
 }
 
-const generatePuzzleConfig = () => {
+const generatePuzzleConfig = (): PuzzleConfig[] => {
     let cx, cy, areas, minArea, maxArea;
     do {
         cx = (Math.random() * 0.4 + 0.3) * 100;
@@ -195,9 +193,7 @@ const generatePuzzleConfig = () => {
     ];
 };
 
-// 修复：创建一个新的子组件来合法地使用 React Hooks
-const PuzzlePiece = ({ config, localScroll, id, index }: { config: any, localScroll: MotionValue<number>, id: string, index: number }) => {
-    // 现在 Hooks 在组件的顶层被调用，符合规则
+const PuzzlePiece = ({ config, localScroll, id, index }: { config: PuzzleConfig, localScroll: MotionValue<number>, id: string, index: number }) => {
     const x = useTransform(localScroll, [0, 1], [0, config.x * 20]);
     const y = useTransform(localScroll, [0, 1], [0, config.y * 20]);
     const rotate = useTransform(localScroll, [0, 1], [0, config.rotate]);
@@ -217,7 +213,7 @@ const PuzzlePiece = ({ config, localScroll, id, index }: { config: any, localScr
 };
 
 const SplittingImage = ({ scrollYProgress }: { scrollYProgress: MotionValue<number> }) => {
-    const [puzzleConfigs] = useState(generatePuzzleConfig);
+    const [puzzleConfigs] = useState<PuzzleConfig[]>(generatePuzzleConfig);
     const id = useId();
     
     const localScroll = useTransform(scrollYProgress, [0.40, 0.66], [0, 1]);
@@ -236,7 +232,6 @@ const SplittingImage = ({ scrollYProgress }: { scrollYProgress: MotionValue<numb
             </svg>
             <motion.div className="h-full w-full" style={{ scale }}>
                 {puzzleConfigs.map((config, index) => (
-                    // 修复：渲染新的子组件，并将所需 props 传入
                     <PuzzlePiece
                         key={index}
                         config={config}
