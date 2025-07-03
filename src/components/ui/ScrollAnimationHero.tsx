@@ -4,7 +4,8 @@ import React, { useRef, useState, useId, useEffect } from 'react';
 import { motion, useScroll, useTransform, MotionValue } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { twMerge, ClassNameValue } from 'tailwind-merge';
+// 修复：移除了未使用的 'twMerge' 和 'ClassNameValue'
+// import { twMerge, ClassNameValue } from 'tailwind-merge';
 
 // --- 类型定义 ---
 interface TrailPoint {
@@ -28,10 +29,10 @@ declare global {
     }
 }
 
-// --- 辅助函数 (cn) ---
-function cn(...inputs: ClassNameValue[]) {
-  return twMerge(inputs);
-}
+// 修复：移除了未使用的 'cn' 函数
+// function cn(...inputs: ClassNameValue[]) {
+//   return twMerge(inputs);
+// }
 
 // --- 场景一：星空穿梭组件 ---
 const LandingPage = () => {
@@ -56,9 +57,10 @@ const LandingPage = () => {
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
 
-            let focalLength = canvas.width * 2;
-            let centerX = canvas.width / 2;
-            let centerY = canvas.height / 2;
+            // 修复：将 'let' 改为 'const'，因为这些变量未被重新赋值
+            const focalLength = canvas.width * 2;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
             
             const numStars = 1900;
             let stars: Star[] = [];
@@ -139,7 +141,7 @@ const LandingPage = () => {
         <div ref={containerRef} className="h-full w-full relative bg-black flex justify-center items-center">
             <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full"></canvas>
             <div ref={textRef} className="absolute text-white text-3xl md:text-5xl text-center uppercase tracking-tighter opacity-0 filter blur-lg" style={{fontFamily: '"PP Neue Montreal", sans-serif'}}>
-                欢迎光临<br />标题占位符<br />标题占位符
+                CLARITY<br />THROUGH<br />SIMPLICITY
             </div>
         </div>
     );
@@ -161,7 +163,8 @@ function getRoundedPolygonPath(points: {x: number, y: number}[], radius: number)
         const len2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
         const angle = Math.acos((v1.x * v2.x + v1.y * v2.y) / (len1 * len2));
         const tan = Math.tan(angle / 2);
-        let cornerRadius = Math.min(radius, (len1 / 2) * tan, (len2 / 2) * tan);
+        // 修复：将 'let' 改为 'const'
+        const cornerRadius = Math.min(radius, (len1 / 2) * tan, (len2 / 2) * tan);
         const t1 = { x: p1.x + (v1.x / len1) * cornerRadius, y: p1.y + (v1.y / len1) * cornerRadius };
         const t2 = { x: p1.x + (v2.x / len2) * cornerRadius, y: p1.y + (v2.y / len2) * cornerRadius };
         pathData += ` L ${t1.x} ${t1.y} Q ${p1.x} ${p1.y}, ${t2.x} ${t2.y}`;
@@ -192,6 +195,27 @@ const generatePuzzleConfig = () => {
     ];
 };
 
+// 修复：创建一个新的子组件来合法地使用 React Hooks
+const PuzzlePiece = ({ config, localScroll, id, index }: { config: any, localScroll: MotionValue<number>, id: string, index: number }) => {
+    // 现在 Hooks 在组件的顶层被调用，符合规则
+    const x = useTransform(localScroll, [0, 1], [0, config.x * 20]);
+    const y = useTransform(localScroll, [0, 1], [0, config.y * 20]);
+    const rotate = useTransform(localScroll, [0, 1], [0, config.rotate]);
+
+    return (
+        <motion.div
+            className="absolute h-full w-full"
+            style={{
+                backgroundImage: `url(${PUZZLE_IMAGE})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                clipPath: `url(#${id}-${index})`,
+                x, y, rotate,
+            }}
+        />
+    );
+};
+
 const SplittingImage = ({ scrollYProgress }: { scrollYProgress: MotionValue<number> }) => {
     const [puzzleConfigs] = useState(generatePuzzleConfig);
     const id = useId();
@@ -211,24 +235,16 @@ const SplittingImage = ({ scrollYProgress }: { scrollYProgress: MotionValue<numb
                 </defs>
             </svg>
             <motion.div className="h-full w-full" style={{ scale }}>
-                {puzzleConfigs.map((config, index) => {
-                    const x = useTransform(localScroll, [0, 1], [0, config.x * 20]);
-                    const y = useTransform(localScroll, [0, 1], [0, config.y * 20]);
-                    const rotate = useTransform(localScroll, [0, 1], [0, config.rotate]);
-                    return (
-                        <motion.div
-                            key={index}
-                            className="absolute h-full w-full"
-                            style={{
-                                backgroundImage: `url(${PUZZLE_IMAGE})`,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center',
-                                clipPath: `url(#${id}-${index})`,
-                                x, y, rotate,
-                            }}
-                        />
-                    );
-                })}
+                {puzzleConfigs.map((config, index) => (
+                    // 修复：渲染新的子组件，并将所需 props 传入
+                    <PuzzlePiece
+                        key={index}
+                        config={config}
+                        localScroll={localScroll}
+                        id={id}
+                        index={index}
+                    />
+                ))}
             </motion.div>
         </div>
     );
@@ -242,15 +258,14 @@ const FinalAnimatedText = ({ scrollYProgress }: { scrollYProgress: MotionValue<n
     return (
         <motion.div style={{ opacity, scale }} className="relative z-20 flex h-full w-full items-center justify-center">
             <div className="max-w-xl text-center">
-                <h1 className="text-5xl font-bold tracking-tighter text-slate-800">界面占位</h1>
-                <p className="my-6 text-sm text-slate-700 md:text-base">这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位这是一个界面占位</p>
+                <h1 className="text-5xl font-bold tracking-tighter text-slate-800">您的动画英雄区域</h1>
+                <p className="my-6 text-sm text-slate-700 md:text-base">这又是一个英雄区域，这次带有滚动触发动画，用动效来激活英雄区域的内容。</p>
             </div>
         </motion.div>
     );
 }
 
 // --- 主应用组件 ---
-// 优化：重命名组件以匹配文件名 `ScrollAnimationHero`，避免与页面路由混淆。
 export default function ScrollAnimationHero() {
     const mainRef = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({
@@ -263,7 +278,6 @@ export default function ScrollAnimationHero() {
     const finalTextOpacity = useTransform(scrollYProgress, [0.65, 0.68], [0, 1]);
 
     return (
-        // 修复：从此处的 main 元素中移除了 'bg-white' 类，以使第二和第三场景的背景透明。
         <main ref={mainRef} id="scroll-animation-hero-container" className="relative h-[500vh]">
             <div className="sticky top-0 h-screen w-full overflow-hidden">
                 <motion.div style={{ opacity: landingOpacity }} className="absolute inset-0">
