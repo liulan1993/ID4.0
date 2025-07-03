@@ -9,7 +9,6 @@ import PlaceholderSection from '@/components/ui/PlaceholderSection';
 import { ThemeColorPicker, type ColorPickerValue } from '@/components/ui/ThemeColorPicker';
 import { Paintbrush } from 'lucide-react';
 import MusicPlayer from '@/components/ui/MusicPlayer';
-import LandingPage from '@/components/ui/LandingPage'; // 导入更新后的 LandingPage
 
 const Page = () => {
     const pageRef = useRef<HTMLDivElement>(null);
@@ -75,7 +74,7 @@ const Page = () => {
                 <PlaceholderSection title="关于我们" />             
                 <PlaceholderSection title="客户案例" />
                 <PlaceholderSection title="定价方案" />
-                <PlaceholderSection title="关于我们" />                
+                <PlaceholderSection title="关于我们" />
                 <PlaceholderSection title="定价方案" />
                 <PlaceholderSection title="关于我们" />                
                 <PlaceholderSection title="客户案例" />
@@ -85,12 +84,6 @@ const Page = () => {
                 <PlaceholderSection title="定价方案" />
                 <PlaceholderSection title="关于我们" />
             </main>
-
-            {/* 将 LandingPage 作为页脚，它包含了所有动画 */}
-            <footer className="relative z-10">
-                <LandingPage />
-            </footer>
-            
             <MusicPlayer />
         </div>
     );
